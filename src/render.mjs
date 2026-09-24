@@ -39,6 +39,17 @@ function labelText(s) {
   return oneLine(s).replace(/[\\[\]]/g, '\\$&');
 }
 
+/**
+ * Escape the inline-markdown control chars (backslash, backtick, `*`, `_`) in a
+ * one-line value so it renders literally instead of breaking the emphasis it is
+ * wrapped in. Used for the tagline, which is force-wrapped in `**…**`: a stray
+ * `**`/`_` there breaks the bold, and a lone backtick would open a code span that
+ * runs until the next backtick elsewhere in the document (e.g. the scripts table).
+ */
+function inlineText(s) {
+  return oneLine(s).replace(/[\\`*_]/g, '\\$&');
+}
+
 /** Inline code inside a table cell: fenced in backticks with pipes escaped. */
 function codeCell(s) {
   return '`' + codeToken(s).replace(/\|/g, '\\|') + '`';
@@ -48,7 +59,10 @@ function codeCell(s) {
 function blockText(s) {
   return String(s == null ? '' : s)
     .replace(/\r\n?/g, '\n')
-    .replace(/```/g, "'''")
+    // Defang backtick code fences. Match runs of 3+ backticks (not just an exact
+    // triple) so a 4/5-backtick run can't leave a stray backtick behind that would
+    // open a spurious inline-code span — mirrors the `~{3,}` tilde handling below.
+    .replace(/`{3,}/g, (m) => "'".repeat(m.length))
     .replace(/~{3,}/g, (m) => m.replace(/~/g, '\\~')) // defang ~~~ tilde code fences
     .replace(/[ \t]+$/gm, '')
     .trim();
@@ -149,7 +163,7 @@ function lead(a) {
   const tagline = oneLine(a.tagline);
   const desc = blockText(a.description);
   const out = [];
-  if (tagline) out.push(`**${tagline}**`);
+  if (tagline) out.push(`**${inlineText(tagline)}**`);
   if (desc && desc !== tagline) out.push(desc);
   return out.join('\n\n');
 }

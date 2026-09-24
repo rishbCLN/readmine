@@ -201,3 +201,27 @@ test('render: an unknown template falls back to app', () => {
   const out = render({ ...CLI_ANSWERS, template: 'nonsense' });
   assert.match(out, /## Getting started/);
 });
+
+test('render: a 4+ backtick run in the description is fully neutralized (no stray backtick)', () => {
+  // Exactly-3 backticks were already defanged; a run of 4/5 used to leave a stray
+  // backtick behind ("x'''`y"), which can open a spurious inline-code span that
+  // swallows later single-backtick spans (e.g. the scripts table's code cells).
+  const out = render({
+    name: 'p', tagline: 't', description: `x${'`'.repeat(4)}y`, template: 'minimal', badges: false,
+  });
+  const descBlock = out.split('\n\n').find((s) => s.startsWith('x'));
+  assert.ok(descBlock, 'the description block should be present');
+  assert.doesNotMatch(descBlock, /`/); // the whole backtick run became non-backticks
+  assert.equal((out.match(/`/g) || []).length % 2, 0, 'no unbalanced backtick left in the document');
+});
+
+test('render: emphasis/backtick chars in the tagline are escaped so they cannot break the bold wrapper', () => {
+  // The tagline is force-wrapped in **…**; a stray `**`/`_` breaks the bold and a
+  // lone backtick opens a code span that runs until the next backtick elsewhere.
+  const out = render({ ...CLI_ANSWERS, tagline: 'press ` then *go* _now_' });
+  assert.ok(
+    out.includes('**press \\` then \\*go\\* \\_now\\_**'),
+    'the tagline should be backslash-escaped inside the ** ** wrapper',
+  );
+  assert.ok(!out.includes('press ` '), 'the stray backtick must be escaped, not left raw');
+});
