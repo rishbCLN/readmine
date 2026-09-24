@@ -140,6 +140,42 @@ test('render: a description with a code fence cannot break the markdown', () => 
   assert.match(out, /rogue\(\)/); // its text survives, just no longer as a real fence
 });
 
+test('render: a description with a ~~~ tilde fence cannot break the markdown', () => {
+  const nasty = 'Intro.\n~~~\nrogue()\n~~~\nOutro.';
+  const out = render({ ...CLI_ANSWERS, description: nasty });
+  const fences = (out.match(/```/g) || []).length;
+  assert.equal(fences % 2, 0, 'backtick code fences should stay balanced');
+  assert.doesNotMatch(out, /~~~/); // the injected tilde-fence opener was neutralized
+  assert.match(out, /rogue\(\)/); // its text survives, just no longer as a real fence
+});
+
+test('render: license badge label escapes ] / [ so it cannot break the image link', () => {
+  const out = render({ ...CLI_ANSWERS, license: 'MIT] hax [' });
+  assert.match(out, /!\[license: MIT\\\] hax \\\[\]/); // brackets are backslash-escaped in the label
+  assert.doesNotMatch(out, /!\[license: MIT\] /); // not closed early by a raw ']'
+});
+
+test('render: parentheses in badge values are percent-encoded so the URL is not cut short', () => {
+  // "(MIT OR Apache-2.0)" is a valid, common SPDX expression. A raw ")" inside the
+  // shields URL would close the markdown image link early and break the badge.
+  const out = render({ ...CLI_ANSWERS, license: '(MIT OR Apache-2.0)' });
+  const line = out.split('\n').find((l) => l.includes('shields.io/badge/license'));
+  assert.ok(line, 'a license badge should be rendered');
+  // Pull out the image URL: ![alt](URL) — URL parsing stops at the first ')'.
+  const m = /!\[license:[^\]]*\]\(([^)]*)\)/.exec(line);
+  assert.ok(m, 'the image link should parse');
+  assert.ok(m[1].endsWith('.svg'), `URL must not be truncated before .svg (got ${m[1]})`);
+  assert.doesNotMatch(m[1], /[()]/); // no raw parens survive inside the URL
+  assert.match(line, /%28MIT_OR_Apache--2\.0%29/); // parens encoded, shields dash-escaping intact
+});
+
+test('render: parentheses in the node engine badge are encoded too', () => {
+  const out = render({ ...CLI_ANSWERS, node: '>=18 (LTS)' });
+  const line = out.split('\n').find((l) => l.includes('shields.io/badge/node'));
+  const m = /!\[node\]\(([^)]*)\)/.exec(line);
+  assert.ok(m && m[1].endsWith('.svg'), 'node badge URL must not be cut off at a paren');
+});
+
 test('render: pipes in a script are escaped inside the table', () => {
   const out = render({ ...CLI_ANSWERS, scripts: { build: 'tsc | tee log' } });
   assert.match(out, /tsc \\\| tee log/);

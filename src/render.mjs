@@ -34,6 +34,11 @@ function cell(s) {
   return oneLine(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 }
 
+/** Escape a value used as a markdown link/image LABEL so `[`/`]` can't break out of the brackets. */
+function labelText(s) {
+  return oneLine(s).replace(/[\\[\]]/g, '\\$&');
+}
+
 /** Inline code inside a table cell: fenced in backticks with pipes escaped. */
 function codeCell(s) {
   return '`' + codeToken(s).replace(/\|/g, '\\|') + '`';
@@ -44,24 +49,35 @@ function blockText(s) {
   return String(s == null ? '' : s)
     .replace(/\r\n?/g, '\n')
     .replace(/```/g, "'''")
+    .replace(/~{3,}/g, (m) => m.replace(/~/g, '\\~')) // defang ~~~ tilde code fences
     .replace(/[ \t]+$/gm, '')
     .trim();
 }
 
+/**
+ * Percent-encode a value for use inside a markdown link/image URL. `encodeURIComponent`
+ * deliberately leaves `(`/`)` untouched, but a literal `)` closes the `](...)` early and
+ * breaks (or lets someone inject into) the surrounding markdown — so we encode them too.
+ * This matters for real, valid inputs like the SPDX license expression `(MIT OR Apache-2.0)`.
+ */
+function urlEncode(s) {
+  return encodeURIComponent(oneLine(s)).replace(/\(/g, '%28').replace(/\)/g, '%29');
+}
+
 /** Escape a value for a shields.io badge label (dash/underscore/space rules). */
 function shieldsLabel(s) {
-  return encodeURIComponent(oneLine(s).replace(/-/g, '--').replace(/_/g, '__').replace(/ /g, '_'));
+  return urlEncode(oneLine(s).replace(/-/g, '--').replace(/_/g, '__').replace(/ /g, '_'));
 }
 
 /** A single URL path segment (owner, repo, ...). */
 function seg(s) {
-  return encodeURIComponent(oneLine(s));
+  return urlEncode(s);
 }
 
 /** npm names are URL-safe already (incl. @scope/name); only encode if something odd sneaks in. */
 function npmBadgeName(name) {
   const n = oneLine(name);
-  return /^(@[a-z0-9-._~]+\/)?[a-z0-9-._~]+$/i.test(n) ? n : encodeURIComponent(n);
+  return /^(@[a-z0-9-._~]+\/)?[a-z0-9-._~]+$/i.test(n) ? n : urlEncode(n);
 }
 
 /** Strip an npm scope: "@acme/widget" → "widget". */
@@ -121,7 +137,7 @@ function badges(a) {
     lines.push(`[![npm](https://img.shields.io/npm/v/${nm}.svg)](https://www.npmjs.com/package/${nm})`);
   }
   if (a.license) {
-    lines.push(`[![license: ${cell(a.license)}](https://img.shields.io/badge/license-${shieldsLabel(a.license)}-blue.svg)](LICENSE)`);
+    lines.push(`[![license: ${labelText(a.license)}](https://img.shields.io/badge/license-${shieldsLabel(a.license)}-blue.svg)](LICENSE)`);
   }
   if (a.node) {
     lines.push(`[![node](https://img.shields.io/badge/node-${shieldsLabel(a.node)}-brightgreen.svg)](https://nodejs.org)`);
