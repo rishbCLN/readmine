@@ -1,0 +1,42 @@
+{
+  "name": "readmine",
+  "version": "0.1.0",
+  "description": "Generate a beautiful README for your project in seconds — an interactive, zero-dependency wizard that reads your package.json and writes the docs for you.",
+  "type": "module",
+  "bin": {
+    "readmine": "bin/readmine.mjs"
+  },
+  "scripts": {
+    "test": "node --test",
+    "start": "node bin/readmine.mjs"
+  },
+  "keywords": [
+    "readme",
+    "readme-generator",
+    "generator",
+    "markdown",
+    "documentation",
+    "docs",
+    "scaffold",
+    "boilerplate",
+    "cli",
+    "developer-tools",
+    "zero-dependency"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/readmine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/readmine/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/readmine#readme"
+}
