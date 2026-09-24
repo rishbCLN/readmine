@@ -20,7 +20,7 @@ to keep it that way: fast, obvious, deterministic, and cross-platform.
 ## Getting started
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/readmine.git
+git clone https://github.com/rishbCLN/readmine.git
 cd readmine
 node --test                    # run the suite
 node bin/readmine.mjs --yes    # try it in this repo (writes README.generated.md)

@@ -1,6 +1,6 @@
 # readmine
 
-[![CI](https://github.com/YOUR_USERNAME/readmine/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/readmine/actions/workflows/ci.yml)
+[![CI](https://github.com/rishbCLN/readmine/actions/workflows/ci.yml/badge.svg)](https://github.com/rishbCLN/readmine/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/readmine.svg)](https://www.npmjs.com/package/readmine)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node->=18-brightgreen.svg)](https://nodejs.org)
