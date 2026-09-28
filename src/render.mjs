@@ -237,7 +237,11 @@ function makeCtx(a) {
 
 function normalize(answers) {
   const a = answers && typeof answers === 'object' ? answers : {};
-  const template = TEMPLATES[a.template] ? a.template : 'app';
+  // Use Object.hasOwn, NOT `TEMPLATES[a.template]`: a bare property lookup walks
+  // the prototype chain, so a template named "toString"/"constructor"/"valueOf"
+  // would resolve to an inherited Function, look "valid", and later blow up with
+  // `tpl.build is not a function`. Only own keys are real templates.
+  const template = Object.hasOwn(TEMPLATES, a.template) ? a.template : 'app';
   return {
     name: a.name || 'my-project',
     tagline: a.tagline || '',

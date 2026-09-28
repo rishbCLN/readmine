@@ -202,6 +202,20 @@ test('render: an unknown template falls back to app', () => {
   assert.match(out, /## Getting started/);
 });
 
+// Regression: template selection used a bare `TEMPLATES[a.template]` truthiness
+// check, which walks the prototype chain. A template literally named "toString",
+// "constructor", "valueOf", etc. resolved to an inherited Function (truthy), so
+// normalize() kept it, and render() then crashed with "tpl.build is not a
+// function". Such names must fall back to the default "app" template instead.
+for (const proto of ['toString', 'constructor', 'valueOf', 'hasOwnProperty', '__proto__']) {
+  test(`render: a template named "${proto}" (a prototype key) falls back to app, not a crash`, () => {
+    let out;
+    assert.doesNotThrow(() => { out = render({ ...CLI_ANSWERS, template: proto }); });
+    assert.match(out, /## Getting started/); // the "app" template's signature section
+    assert.ok(out.startsWith('# portkill\n'));
+  });
+}
+
 test('render: a 4+ backtick run in the description is fully neutralized (no stray backtick)', () => {
   // Exactly-3 backticks were already defanged; a run of 4/5 used to leave a stray
   // backtick behind ("x'''`y"), which can open a spurious inline-code span that
